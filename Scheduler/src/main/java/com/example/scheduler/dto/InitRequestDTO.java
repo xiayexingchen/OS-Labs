@@ -10,4 +10,5 @@ public class InitRequestDTO {
     private List<ProcessControlBlock> processes;
     private String algorithm;
     private Integer timeSlice; // 仅RR算法需要
+
 }

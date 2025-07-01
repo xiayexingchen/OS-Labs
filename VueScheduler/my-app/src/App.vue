@@ -15,10 +15,8 @@
 
     <!-- 算法选择与时间片区 -->
     <AlgorithmSelector
-      :algorithm="algorithm"
-      :timeSlice="timeSlice"
-      @algorithm-change="onAlgorithmChange"
-      @timeSlice-change="onTimeSliceChange"
+        v-model:algorithm="algorithm"
+        v-model:timeSlice="timeSlice"
     />
     <!-- 控制按钮区 -->
     <SchedulerControl

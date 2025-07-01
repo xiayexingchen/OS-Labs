@@ -44,6 +44,7 @@ public class SchedulerService {
     }
 
     // 初始化进程列表（可从前端表单或文件获取）
+    // 初始化进程列表（可从前端表单或文件获取）
     public void initProcesses(List<ProcessControlBlock> processes) {
         this.processList.clear();
         this.processList.addAll(processes);
@@ -53,7 +54,12 @@ public class SchedulerService {
             core.setRunningProcess(null);
         }
         this.currentTime = 0;
-
+        // 补充：初始化时把到达时间<=0的进程加入readyQueue
+        for (ProcessControlBlock pcb : processList) {
+            if (pcb.getArrivalTime() <= currentTime && pcb.getStatus() == ProcessStatus.READY) {
+                readyQueue.add(pcb);
+            }
+        }
     }
 
 
