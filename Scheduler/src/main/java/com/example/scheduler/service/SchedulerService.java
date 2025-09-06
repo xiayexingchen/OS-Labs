@@ -1,6 +1,5 @@
 package com.example.scheduler.service;
 
-import com.example.scheduler.algorithm.RoundRobinAlgorithm;
 import com.example.scheduler.model.*;
 import com.example.scheduler.algorithm.ISchedulingAlgorithm;
 import lombok.Data;
@@ -45,7 +44,6 @@ public class SchedulerService {
     }
 
     // 初始化进程列表（可从前端表单或文件获取）
-    // 初始化进程列表（可从前端表单或文件获取）
     public void initProcesses(List<ProcessControlBlock> processes) {
         this.processList.clear();
         this.processList.addAll(processes);
@@ -55,12 +53,7 @@ public class SchedulerService {
             core.setRunningProcess(null);
         }
         this.currentTime = 0;
-        // 补充：初始化时把到达时间<=0的进程加入readyQueue
-        for (ProcessControlBlock pcb : processList) {
-            if (pcb.getArrivalTime() <= currentTime && pcb.getStatus() == ProcessStatus.READY) {
-                readyQueue.add(pcb);
-            }
-        }
+
     }
 
 
@@ -102,26 +95,6 @@ public class SchedulerService {
             ProcessControlBlock running = core.getRunningProcess();
             if (running != null && running.getStatus() == ProcessStatus.RUNNING) {
                 running.setRemainingTime(running.getRemainingTime() - 1);
-
-                // ========== RR算法时间片处理 ==========
-                if (algorithm instanceof RoundRobinAlgorithm) {
-                    running.setTimeSliceUsed(running.getTimeSliceUsed() + 1);
-                    int timeSlice = ((RoundRobinAlgorithm) algorithm).getTimeSlice();
-
-                    if (running.getRemainingTime() > 0 && running.getTimeSliceUsed() >= timeSlice) {
-                        // 时间片到期但未完成，让出CPU
-                        running.setStatus(ProcessStatus.READY);
-                        running.setTimeSliceUsed(0);
-                        core.setRunningProcess(null);
-                        if (!readyQueue.contains(running)) {
-                            readyQueue.add(running);
-                        }
-                        // rrQueue不需要手动操作，selectProcesses下一步会处理
-                        continue; // 跳过下方统计（让出CPU不再算周转、等待，避免重复）
-                    }
-                }
-                // ========== RR算法结束 ==========
-
                 // 统计等待和周转
                 running.setTurnaroundTime(currentTime + 1 - running.getArrivalTime());
                 running.setWaitingTime(running.getTurnaroundTime() - running.getBurstTime());

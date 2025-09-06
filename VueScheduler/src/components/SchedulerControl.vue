@@ -21,6 +21,39 @@ export default {
 </script>
 
 <style scoped>
+.control-buttons {
+  text-align: center;
+  margin-bottom: 2em;
+}
+
+button {
+  padding: 10px 20px;
+  margin: 5px;
+  border: none;
+  border-radius: 5px;
+  background-color: #3498db;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #2980b9;
+}
+
+button:disabled {
+  background-color: #bdc3c7;
+  cursor: not-allowed;
+}
+
+.reset-all {
+  background-color: #e74c3c;
+}
+
+.reset-all:hover {
+  background-color: #c0392b;
+}
+
 .section-block {
   margin-bottom: 2em;
   padding: 1em;

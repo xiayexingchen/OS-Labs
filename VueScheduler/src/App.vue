@@ -1,5 +1,8 @@
 <template>
-  <div class="app-container">
+  <div id="app">
+    <Login v-if="!loggedIn" @loggedIn="handleLoggedIn" />
+    <Layout v-else>
+      <div class="app-container">
     <!-- 标题 -->
     <h1>进程调度模拟系统</h1>
     
@@ -15,8 +18,10 @@
 
     <!-- 算法选择与时间片区 -->
     <AlgorithmSelector
-        v-model:algorithm="algorithm"
-        v-model:timeSlice="timeSlice"
+      :algorithm="algorithm"
+      :timeSlice="timeSlice"
+      @algorithm-change="onAlgorithmChange"
+      @timeSlice-change="onTimeSliceChange"
     />
     <!-- 控制按钮区 -->
     <SchedulerControl
@@ -36,6 +41,8 @@
     <PerformanceStats
       :performance="performance"
     />
+      </div>
+    </Layout>
   </div>
 </template>
 
@@ -46,6 +53,8 @@ import SchedulerControl from './components/SchedulerControl.vue'
 import SchedulerStatus from './components/SchedulerStatus.vue'
 import AlgorithmSelector from './components/AlgorithmSelector.vue'
 import PerformanceStats from './components/PerformanceStats.vue'
+import Layout from './components/Layout.vue'
+import Login from './components/Login.vue'
 
 export default {
   components :{
@@ -54,6 +63,8 @@ export default {
     SchedulerStatus,
     AlgorithmSelector,
     PerformanceStats,
+    Layout,
+    Login,
   },
   name: 'App',
   data() {
@@ -71,6 +82,7 @@ export default {
       status: null,
       performance: null,
       inited: false,
+      loggedIn: false,
     }
   },
   methods: {
@@ -172,24 +184,37 @@ export default {
         this.performance = null;
         console.error('performance刷新异常:', e);
       }
+    },
+    handleLoggedIn() {
+      this.loggedIn = true;
     }
   }
 }
 </script>
 
-<style scoped>
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#app {
+  height: 100%;
+}
+
 .app-container {
-  max-width: 900px;
-  margin: 0 auto;
+  width: 100%;
   padding: 2em;
-  font-family: "Microsoft YaHei", Arial, sans-serif;
 }
 
 .section-block {
   margin-bottom: 2em;
-  padding: 1em;
-  background: #f8f9fa;
+  padding: 1.5em;
+  background: #ffffff;
   border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .input-table {
@@ -202,6 +227,11 @@ export default {
   padding: 0.5em;
   text-align: center;
 }
+h1 {
+  color: #2c3e50;
+  text-align: center;
+}
+
 button {
   margin-right: 0.5em;
 }

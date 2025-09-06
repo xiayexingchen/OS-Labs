@@ -58,6 +58,55 @@ export default {
 </script>
 
 <style scoped>
+.input-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1em;
+}
+
+thead th {
+  background-color: #f2f2f2;
+  padding: 10px;
+  text-align: left;
+}
+
+tbody td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.add-btn, .remove-btn {
+  padding: 5px 10px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+}
+
+.add-btn {
+  background-color: #2ecc71;
+}
+
+.add-btn:hover {
+  background-color: #27ae60;
+}
+
+.remove-btn {
+  background-color: #e74c3c;
+}
+
+.remove-btn:hover {
+  background-color: #c0392b;
+}
+
 .section-block {
   margin-bottom: 2em;
   padding: 1em;

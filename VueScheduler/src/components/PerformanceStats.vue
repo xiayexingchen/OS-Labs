@@ -33,6 +33,34 @@ export default {
 </script>
 
 <style scoped>
+.performance-container {
+  padding: 1.5em;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+h3 {
+  color: #2c3e50;
+  margin-top: 0;
+}
+
+.performance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.performance-item {
+  background-color: #f8f9fa;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.performance-item strong {
+  color: #34495e;
+}
+
 .section-block {
   margin-bottom: 2em;
   padding: 1em;

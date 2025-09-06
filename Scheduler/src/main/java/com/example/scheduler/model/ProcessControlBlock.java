@@ -16,7 +16,6 @@ public class ProcessControlBlock {
     private int waitingTime;        // 等待时间
     private int turnaroundTime;     // 周转时间
     private double weightedTurnaroundTime; // 带权周转时间
-    private int timeSliceUsed ; // 已用时间片
 
 
 
@@ -33,7 +32,6 @@ public class ProcessControlBlock {
         this.waitingTime = 0;
         this.turnaroundTime = 0;
         this.weightedTurnaroundTime = 0.0;
-        this.timeSliceUsed = 0;
     }
 
     // getter/setter 省略，可用IDE自动生成   就是供外部获取内部信息的函数

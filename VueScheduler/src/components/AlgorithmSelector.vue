@@ -58,6 +58,34 @@ export default {
 </script>
 
 <style scoped>
+.selector-container {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 2em;
+  padding: 1.5em;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+select, input {
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
 .section-block {
   margin-bottom: 2em;
   padding: 1em;

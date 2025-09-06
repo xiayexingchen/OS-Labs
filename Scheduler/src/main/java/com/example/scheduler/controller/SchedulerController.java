@@ -183,11 +183,11 @@ public class SchedulerController {
     @GetMapping("/test-priority")
     public SchedulerStatusDTO testPriority() {
         List<ProcessControlBlock> testProcs = List.of(
-                new ProcessControlBlock(1, 0, 5, 10, 1), // 到达时间0，运行时间5
-                new ProcessControlBlock(2, 0, 2, 12, 2), // 到达时间1，运行时间2
+                new ProcessControlBlock(1, 0, 5, 10, 2), // 到达时间0，运行时间5
+                new ProcessControlBlock(2, 0, 2, 12, 1), // 到达时间1，运行时间2
                 new ProcessControlBlock(3, 0, 1, 8, 3),  // 到达时间2，运行时间1
                 new ProcessControlBlock(4, 0, 4, 15, 2), // 到达时间3，运行时间4
-                new ProcessControlBlock(5, 0, 3, 11, 3)  // 到达时间4，运行时间3
+                new ProcessControlBlock(5, 0, 3, 11, 1)  // 到达时间4，运行时间3
         );
         schedulerService.initProcesses(testProcs);
         // 使用SJF算法

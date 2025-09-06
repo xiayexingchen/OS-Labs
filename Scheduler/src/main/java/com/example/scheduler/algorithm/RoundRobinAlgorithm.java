@@ -42,7 +42,6 @@ public class RoundRobinAlgorithm implements ISchedulingAlgorithm {
                 selected.add(pcb);
             }
         }
-
         return selected;
     }
 
