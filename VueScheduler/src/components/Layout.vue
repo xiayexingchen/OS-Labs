@@ -4,8 +4,8 @@
       <!-- Sidebar content will go here -->
       <h2>实验列表</h2>
       <ul>
-        <li class="active">进程调度</li>
-        <!-- More experiments can be added here -->
+        <li :class="{ active: activeExperiment === 'scheduler' }" @click="switchExperiment('scheduler')">进程调度</li>
+        <li :class="{ active: activeExperiment === 'producer-consumer' }" @click="switchExperiment('producer-consumer')">生产者-消费者</li>
       </ul>
     </aside>
     <main class="main-content">
@@ -17,6 +17,17 @@
 <script>
 export default {
   name: 'AppLayout',
+  data() {
+    return {
+      activeExperiment: 'scheduler'
+    }
+  },
+  methods: {
+    switchExperiment(experiment) {
+      this.activeExperiment = experiment;
+      this.$emit('experiment-change', experiment);
+    }
+  }
 }
 </script>
 

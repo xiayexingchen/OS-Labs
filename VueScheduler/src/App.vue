@@ -1,8 +1,9 @@
 <template>
   <div id="app">
     <Login v-if="!loggedIn" @loggedIn="handleLoggedIn" />
-    <Layout v-else>
-      <div class="app-container">
+    <Layout v-else @experiment-change="handleExperimentChange">
+      <div class="app-container" v-if="currentExperiment === 'scheduler'">
+
     <!-- 标题 -->
     <h1>进程调度模拟系统</h1>
     
@@ -42,6 +43,7 @@
       :performance="performance"
     />
       </div>
+      <ProducerConsumer v-if="currentExperiment === 'producer-consumer'" />
     </Layout>
   </div>
 </template>
@@ -55,9 +57,10 @@ import AlgorithmSelector from './components/AlgorithmSelector.vue'
 import PerformanceStats from './components/PerformanceStats.vue'
 import Layout from './components/Layout.vue'
 import Login from './components/Login.vue'
+import ProducerConsumer from './components/ProducerConsumer.vue'
 
 export default {
-  components :{
+  components: {
     ProcessInputTable,
     SchedulerControl,
     SchedulerStatus,
@@ -65,6 +68,7 @@ export default {
     PerformanceStats,
     Layout,
     Login,
+    ProducerConsumer,
   },
   name: 'App',
   data() {
@@ -83,9 +87,13 @@ export default {
       performance: null,
       inited: false,
       loggedIn: false,
+      currentExperiment: 'scheduler',
     }
   },
   methods: {
+    handleExperimentChange(experiment) {
+      this.currentExperiment = experiment;
+    },
     addProcess() {
       this.processes.push({
         pid: `${this.processes.length + 1}`,
