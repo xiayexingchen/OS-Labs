@@ -14,6 +14,7 @@
         @add-process="addProcess"
         @remove-process="removeProcess"
         @update-process="updateProcess"
+        @batch-add-processes="handleBatchAddProcesses"
       />
     </section>
 
@@ -96,7 +97,7 @@ export default {
     },
     addProcess() {
       this.processes.push({
-        pid: `${this.processes.length + 1}`,
+        pid: this.processes.length + 1,
         arrivalTime: 0,
         burstTime: 1,
         jobSize: 1,
@@ -193,6 +194,35 @@ export default {
         console.error('performance刷新异常:', e);
       }
     },
+    handleBatchAddProcesses(batchProcessData) {
+      const { count, defaultArrivalTime, defaultBurstTime, defaultJobSize, defaultPriority, incrementArrivalTime } = batchProcessData;
+      
+      // 获取当前最大进程ID
+      const maxProcessId = this.processes.length > 0 
+        ? Math.max(...this.processes.map(p => p.pid)) 
+        : 0;
+      
+      // 生成新进程数组
+      const newProcesses = [];
+      for (let i = 0; i < count; i++) {
+        const processId = maxProcessId + i + 1;
+        const processArrivalTime = incrementArrivalTime 
+          ? defaultArrivalTime + i 
+          : defaultArrivalTime;
+        
+        newProcesses.push({
+          pid: processId,
+          arrivalTime: processArrivalTime,
+          burstTime: defaultBurstTime,
+          jobSize: defaultJobSize,
+          priority: defaultPriority
+        });
+      }
+      
+      // 将新进程添加到现有进程列表
+      this.processes = [...this.processes, ...newProcesses];
+      alert(`成功添加 ${count} 个进程！`);
+    },
     handleLoggedIn() {
       this.loggedIn = true;
     }
@@ -201,11 +231,17 @@ export default {
 </script>
 
 <style>
+* {
+  box-sizing: border-box;
+}
+
 html, body {
   margin: 0;
   padding: 0;
   height: 100%;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 #app {
@@ -214,12 +250,12 @@ html, body {
 
 .app-container {
   width: 100%;
-  padding: 2em;
+  padding: 1em;
 }
 
 .section-block {
-  margin-bottom: 2em;
-  padding: 1.5em;
+  margin-bottom: 1em;
+  padding: 1em;
   background: #ffffff;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -228,19 +264,76 @@ html, body {
 .input-table {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 1em;
+  margin-bottom: 0.5em;
 }
+
 .input-table th, .input-table td {
   border: 1px solid #ccc;
   padding: 0.5em;
   text-align: center;
 }
+
 h1 {
   color: #2c3e50;
   text-align: center;
+  margin-top: 0;
+  margin-bottom: 1em;
+  font-size: 1.8rem;
+}
+
+h2 {
+  margin-top: 0;
+  margin-bottom: 1em;
+  font-size: 1.3rem;
 }
 
 button {
   margin-right: 0.5em;
+  font-size: 14px;
+  padding: 8px 12px;
+}
+
+/* 优化滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .app-container {
+    padding: 0.5em;
+  }
+  
+  .section-block {
+    padding: 0.8em;
+  }
+  
+  h1 {
+    font-size: 1.5rem;
+  }
+  
+  h2 {
+    font-size: 1.1rem;
+  }
+  
+  button {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
 }
 </style>
