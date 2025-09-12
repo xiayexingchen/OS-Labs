@@ -10,4 +10,6 @@ public class BufferItem {
     private String producerId;
     private LocalDateTime timestamp;
     private long waitTime; // 等待被消费的时间
+    private boolean isConsumed; // 是否被消费
+    private String consumerId; // 消费者ID
 }

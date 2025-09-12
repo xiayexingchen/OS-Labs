@@ -270,15 +270,18 @@ public class ProducerConsumerService {
         
         // 从队头取出元素
         BufferItem consumedItem = buffer.get(headPointer);
-
-        if (consumedItem == null) return;
+        if (consumedItem == null || consumedItem.isConsumed()) return;
 
         // 计算等待时间
         long waitTime = java.time.Duration.between(consumedItem.getTimestamp(), LocalDateTime.now()).toMillis();
         consumedItem.setWaitTime(waitTime);
+        
+        // 标记物品为已消费，并记录消费者ID
+        consumedItem.setConsumed(true);
+        consumedItem.setConsumerId(consumer.getId());
+        
+        // 保留物品在缓冲区中，不设为null
 
-        // 清空队头位置
-        buffer.set(headPointer, null);
 
         // 更新队头指针
         headPointer = (headPointer + 1) % bufferSize;

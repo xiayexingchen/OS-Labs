@@ -17,11 +17,6 @@
         <input type="number" id="consumer-count" v-model.number="consumerCount" min="1" max="10">
       </div>
       <div class="setting-item">
-        <label for="simulation-speed">模拟速度:</label>
-        <input type="range" id="simulation-speed" v-model.number="simulationSpeed" min="200" max="2000" step="100">
-        <span>{{ simulationSpeed }}ms</span>
-      </div>
-      <div class="setting-item">
         <label for="production-speed">生产速度:</label>
         <input type="range" id="production-speed" v-model.number="productionSpeed" min="1000" max="5000" step="500">
         <span>{{ productionSpeed / 1000 }}秒</span>
@@ -55,10 +50,16 @@
             :class="{
               'buffer-item-filled': item !== null,
               'buffer-item-head': index === headPointer,
-              'buffer-item-tail': index === tailPointer
+              'buffer-item-tail': index === tailPointer,
+              'buffer-item-consumed': item !== null && item.isConsumed
             }"
           >
-            <span v-if="item !== null">{{ item.value }}</span>
+            <span v-if="item !== null">
+              <div class="item-value">{{ item.value }}</div>
+              <div class="item-producer">生产者: {{ item.producerId }}</div>
+              <div v-if="item.isConsumed" class="item-consumer">消费者: {{ item.consumerId }}</div>
+              <div v-if="item.isConsumed" class="item-wait-time">等待时间: {{ item.waitTime }}ms</div>
+            </span>
             <span v-else>空</span>
             <div v-if="index === headPointer" class="pointer-marker head-marker">H</div>
             <div v-if="index === tailPointer" class="pointer-marker tail-marker">T</div>
@@ -459,11 +460,26 @@ export default {
       if (!status) return;
       
       // 更新缓冲区和指针信息
-      this.buffer = status.buffer || [];
       this.headPointer = status.headPointer || 0;
       this.tailPointer = status.tailPointer || 0;
       this.itemCount = status.itemCount || 0;
       this.bufferSize = status.bufferSize || this.bufferSize;
+      
+      // 确保每个buffer项都有完整的属性，特别是消费状态和消费者ID
+      // 注意：后端返回的是'consumed'字段，而不是'isConsumed'
+      this.buffer = (status.buffer || []).map(item => {
+        if (!item) return null;
+        return {
+          ...item,
+          // 使用后端返回的'consumed'字段，并设置'isConsumed'属性以保持前端一致性
+          isConsumed: item.consumed !== undefined ? item.consumed : false,
+          consumed: item.consumed !== undefined ? item.consumed : false,
+          // 确保consumerId属性存在，未消费时为null
+          consumerId: item.consumerId || null,
+          // 确保waitTime属性存在
+          waitTime: item.waitTime || 0
+        };
+      });
       
       // 更新生产者和消费者信息，完全使用后端返回的真实状态数据
       // 后端API已确认返回包含waiting属性的生产者和消费者数据
@@ -515,8 +531,8 @@ export default {
 <style scoped>
 /* 全局样式 */
 .producer-consumer-container {
-  padding: 20px;
-  max-width: 1200px;
+  padding: 10px;
+  max-width: 95%;
   margin: 0 auto;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -657,7 +673,7 @@ input:focus {
 /* 主内容区域布局 */
 .main-content {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 3fr 2fr;
   gap: 24px;
 }
 
@@ -684,36 +700,65 @@ input:focus {
 }
 
 .buffer-item {
-  width: 70px;
-  height: 70px;
+  width: 100px;
+  height: 100px;
   border: 3px solid #e2e8f0;
+  border-radius: 8px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   font-weight: bold;
   background-color: #f9f9f9;
-  border-radius: 8px;
-  transition: all 0.3s;
   position: relative;
-  font-size: 18px;
+  transition: all 0.3s;
+  padding: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .buffer-item-filled {
-  background: linear-gradient(135deg, #c8e6c9, #a5d6a7);
+  background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+  color: white;
   border-color: #4CAF50;
   transform: scale(1.05);
   box-shadow: 0 4px 8px rgba(76, 175, 80, 0.2);
 }
 
 .buffer-item-head {
-  border: 3px solid #4CAF50;
-  background: rgba(76, 175, 80, 0.1);
+  border-color: #f97316;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.3);
 }
 
 .buffer-item-tail {
-  border: 3px solid #FF9800;
-  background: rgba(255, 152, 0, 0.1);
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+}
+
+.buffer-item-consumed {
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  border-color: #3b82f6;
+}
+
+.item-value {
+  font-size: 24px;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.item-producer,
+.item-consumer,
+.item-wait-time {
+  font-size: 11px;
+  opacity: 0.9;
+  text-align: center;
+  line-height: 1.3;
+  margin: 1px 0;
+}
+
+.item-wait-time {
+  font-size: 10px;
+  opacity: 0.8;
+  margin-top: 2px;
 }
 
 .pointer-marker {

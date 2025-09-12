@@ -77,7 +77,9 @@ export default {
 
 /* 侧边栏样式 */
 .sidebar {
-  width: 220px;
+  width: 240px;
+  min-width: 240px;
+  flex-shrink: 0;
   background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
   color: white;
   display: flex;
@@ -215,7 +217,8 @@ export default {
 /* 响应式设计 */
 @media (max-width: 768px) {
   .sidebar {
-    width: 200px;
+    width: 220px;
+    min-width: 220px;
   }
   
   .menu-link {

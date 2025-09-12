@@ -23,7 +23,9 @@ public class ProducerConsumerController {
                 request.getBufferSize(),
                 request.getProducerCount(),
                 request.getConsumerCount(),
-                request.getSimulationSpeed()
+                request.getSimulationSpeed(),
+                request.getProductionSpeed(),
+                request.getConsumptionSpeed()
         );
         return producerConsumerService.getStatus();
     }
