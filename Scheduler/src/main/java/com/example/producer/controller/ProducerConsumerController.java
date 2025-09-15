@@ -77,4 +77,13 @@ public class ProducerConsumerController {
     public boolean isRunning() {
         return producerConsumerService.isRunning();
     }
+    
+    /**
+     * 获取已消费物品历史记录
+     * GET /api/producer-consumer/consumed-history
+     */
+    @GetMapping("/consumed-history")
+    public List<BufferItem> getConsumedHistory() {
+        return producerConsumerService.getConsumedItemsHistory();
+    }
 }

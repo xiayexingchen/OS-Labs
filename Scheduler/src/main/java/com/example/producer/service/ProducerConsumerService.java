@@ -35,6 +35,7 @@ public class ProducerConsumerService {
     private int totalConsumed;
     private int bufferFullCount;
     private int bufferEmptyCount;
+    private List<BufferItem> consumedItemsHistory; // 存储已消费物品的历史记录
     
     // 添加锁和条件变量来实现真实的生产者消费者等待/唤醒机制
     private final ReentrantLock lock = new ReentrantLock();
@@ -150,6 +151,7 @@ public class ProducerConsumerService {
         totalConsumed = 0;
         bufferFullCount = 0;
         bufferEmptyCount = 0;
+        consumedItemsHistory = new ArrayList<>(); // 重置已消费物品历史记录
     }
     
     // 生产者线程的运行方法
@@ -281,7 +283,22 @@ public class ProducerConsumerService {
         consumedItem.setConsumerId(consumer.getId());
         
         // 保留物品在缓冲区中，不设为null
-
+        
+        // 将已消费物品添加到历史记录中（创建副本以避免引用问题）
+        BufferItem historyItem = new BufferItem();
+        historyItem.setValue(consumedItem.getValue());
+        historyItem.setProducerId(consumedItem.getProducerId());
+        historyItem.setConsumerId(consumedItem.getConsumerId());
+        historyItem.setTimestamp(consumedItem.getTimestamp());
+        historyItem.setWaitTime(consumedItem.getWaitTime());
+        historyItem.setConsumed(true);
+        
+        consumedItemsHistory.add(0, historyItem); // 添加到列表头部（最新的在前）
+        
+        // 限制历史记录数量，最多保留50条
+        if (consumedItemsHistory.size() > 50) {
+            consumedItemsHistory.remove(consumedItemsHistory.size() - 1);
+        }
 
         // 更新队头指针
         headPointer = (headPointer + 1) % bufferSize;
@@ -346,6 +363,12 @@ public class ProducerConsumerService {
 
     public boolean isRunning() {
         return isRunning;
+    }
+    
+    // 获取已消费物品的历史记录
+    public synchronized List<BufferItem> getConsumedItemsHistory() {
+        // 返回历史记录的副本，避免外部修改
+        return new ArrayList<>(consumedItemsHistory);
     }
     
     // 生产速度的getter和setter方法

@@ -125,7 +125,30 @@
         </div>
       </div>
     </div>
-    
+        <!-- 已消费物品历史记录 -->
+    <div class="consumed-history">
+      <h2>已消费物品历史记录</h2>
+      <div class="consumed-items-grid">
+        <div 
+          v-for="(item, index) in formattedConsumedItems" 
+          :key="index"
+          class="consumed-item"
+          :class="{
+            'consumed-item-filled': item !== null,
+            'consumed-item-recent': index === 0 && item !== null
+          }"
+        >
+          <span v-if="item !== null">
+            <div class="item-value">{{ item.value }}</div>
+            <div class="item-producer">{{ item.producerId }}</div>
+            <div class="item-consumer">{{ item.consumerId }}</div>
+          </span>
+          <span v-else>空</span>
+          <div v-if="index === 0" class="pointer-marker recent-marker">R</div>
+        </div>
+      </div>
+    </div>
+
     <!-- 统计信息区域 -->
     <div class="stats-section">
       <h2>统计信息</h2>
@@ -153,6 +176,7 @@
       </div>
     </div>
     
+
     <!-- 操作日志区域 -->
     <div class="operation-log">
       <h2>操作日志</h2>
@@ -194,7 +218,9 @@ export default {
         bufferEmptyCount: 0
       },
       statusPollingInterval: null,
-      pollingInterval: 1000 // 每1000ms获取一次状态，与后端模拟速度相匹配
+      pollingInterval: 1000, // 每1000ms获取一次状态，与后端模拟速度相匹配
+      consumedItemsHistory: [], // 存储已消费物品的历史记录
+      historyFetchCounter: 0 // 用于控制历史记录获取频率的计数器
     }
   },
   created() {
@@ -207,9 +233,35 @@ export default {
     // 计算缓冲区使用率百分比
     bufferUsage() {
       return Math.round((this.itemCount / this.bufferSize) * 100);
+    },
+    
+    // 格式化已消费物品列表，固定显示20个方格
+    formattedConsumedItems() {
+      // 创建一个长度为20的新数组，初始值为null
+      const formatted = new Array(20).fill(null);
+      
+      // 将已消费物品填充到新数组中，第一个位置是最近消费的
+      // 从历史列表的后面获取数据，确保最新消费的物品显示在第一个位置
+      const itemsToDisplay = this.consumedItemsHistory.slice(-20).reverse();
+      itemsToDisplay.forEach((item, index) => {
+        formatted[index] = item;
+      });
+      
+      return formatted;
     }
   },
   methods: {
+    // 获取已消费物品历史记录
+    async fetchConsumedHistory() {
+      try {
+        const response = await this.$axios.get('/api/producer-consumer/consumed-history');
+        this.consumedItemsHistory = response.data;
+      } catch (error) {
+        console.error('获取已消费物品历史记录失败:', error);
+        // 本地模拟模式下，不做处理
+      }
+    },
+    
     async initializeSimulation() {
       try {
         const response = await this.$axios.post('/api/producer-consumer/init', {
@@ -221,6 +273,7 @@ export default {
           consumptionSpeed: this.consumptionSpeed
         });
         this.updateFromStatus(response.data);
+        this.fetchConsumedHistory(); // 获取初始历史记录
       } catch (error) {
         console.error('初始化失败:', error);
         alert('后端服务未启动或连接失败，请确保Spring Boot应用正在运行');
@@ -404,6 +457,7 @@ export default {
         this.isRunning = true;
         this.updateFromStatus(response.data);
         this.startStatusPolling();
+        this.fetchConsumedHistory(); // 获取初始历史记录
         this.addLog(`模拟开始，速度: ${this.simulationSpeed}ms`);
       } catch (error) {
         console.error('开始模拟失败:', error);
@@ -465,20 +519,31 @@ export default {
       this.itemCount = status.itemCount || 0;
       this.bufferSize = status.bufferSize || this.bufferSize;
       
-      // 确保每个buffer项都有完整的属性，特别是消费状态和消费者ID
-      // 注意：后端返回的是'consumed'字段，而不是'isConsumed'
-      this.buffer = (status.buffer || []).map(item => {
-        if (!item) return null;
-        return {
-          ...item,
-          // 使用后端返回的'consumed'字段，并设置'isConsumed'属性以保持前端一致性
-          isConsumed: item.consumed !== undefined ? item.consumed : false,
-          consumed: item.consumed !== undefined ? item.consumed : false,
-          // 确保consumerId属性存在，未消费时为null
-          consumerId: item.consumerId || null,
-          // 确保waitTime属性存在
-          waitTime: item.waitTime || 0
-        };
+      // 获取后端返回的buffer数据
+      const backendBuffer = status.buffer || [];
+      
+      // 创建一个长度等于bufferSize的新数组，初始值为null
+      this.buffer = new Array(this.bufferSize).fill(null);
+      
+      // 将后端返回的数据填充到新数组中
+      backendBuffer.forEach((item, index) => {
+        if (index < this.bufferSize) {
+          if (!item) {
+            this.buffer[index] = null;
+          } else {
+            // 确保每个buffer项都有完整的属性
+            this.buffer[index] = {
+              ...item,
+              // 使用后端返回的'consumed'字段，并设置'isConsumed'属性
+              isConsumed: item.consumed !== undefined ? item.consumed : false,
+              consumed: item.consumed !== undefined ? item.consumed : false,
+              // 确保consumerId属性存在，未消费时为null
+              consumerId: item.consumerId || null,
+              // 确保waitTime属性存在
+              waitTime: item.waitTime || 0
+            };
+          }
+        }
       });
       
       // 更新生产者和消费者信息，完全使用后端返回的真实状态数据
@@ -512,6 +577,16 @@ export default {
       // 更新日志（避免重复）
       if (status.logs && status.logs.length > 0) {
         this.operationLogs = status.logs;
+      }
+      
+      // 每3次状态轮询获取一次历史记录，减少API调用频率
+      if (!this.historyFetchCounter) {
+        this.historyFetchCounter = 0;
+      }
+      this.historyFetchCounter++;
+      if (this.historyFetchCounter >= 2) {
+        this.historyFetchCounter = 0;
+        this.fetchConsumedHistory();
       }
     },
     
@@ -1016,6 +1091,105 @@ input:focus {
   font-style: italic;
 }
 
+/* 已消费物品历史记录样式 */
+.consumed-history {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+.consumed-history h2 {
+  margin-bottom: 18px;
+  font-size: 1.5rem;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 已消费物品网格布局 - 固定20个方格，分为两排 */
+.consumed-items-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 8px;
+  margin: 20px 0;
+  justify-content: center;
+}
+
+/* 已消费物品方格样式 - 调整大小 */
+.consumed-item {
+  width: 120px;
+  height: 90px;
+  border: 3px solid #e2e8f0;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  background-color: #f9f9f9;
+  position: relative;
+  transition: all 0.3s;
+  padding: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  font-size: 12px;
+}
+
+.consumed-item-filled {
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  color: white;
+  border-color: #3b82f6;
+}
+
+.consumed-item-recent {
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  border-color: #e11d48;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+/* 已消费物品内容样式调整 */
+.consumed-item .item-value {
+  font-size: 18px;
+  margin-bottom: 4px;
+  font-weight: bold;
+}
+
+.consumed-item .item-producer,
+.consumed-item .item-consumer {
+  font-size: 9px;
+  opacity: 0.9;
+  text-align: center;
+  line-height: 1.2;
+  margin: 1px 0;
+}
+
+/* 最近消费标记样式 */
+.recent-marker {
+  background: linear-gradient(135deg, #f43f5e, #e11d48);
+  left: 50%;
+  transform: translateX(-50%);
+  top: -22px;
+}
+
+.consumed-history .pointer-info {
+  margin-top: 30px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #64748b;
+  font-weight: bold;
+  padding: 8px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .producer-consumer-container {
@@ -1043,6 +1217,10 @@ input:focus {
   }
   
   .stats-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .consumed-items-container {
     grid-template-columns: 1fr;
   }
   
