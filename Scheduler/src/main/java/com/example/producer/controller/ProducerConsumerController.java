@@ -2,9 +2,12 @@ package com.example.producer.controller;
 
 import com.example.producer.dto.InitRequestDTO;
 import com.example.producer.dto.ProducerConsumerStatusDTO;
+import com.example.producer.model.BufferItem;
 import com.example.producer.service.ProducerConsumerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/producer-consumer")
