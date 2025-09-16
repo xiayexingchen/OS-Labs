@@ -70,9 +70,9 @@
             >
               <span v-if="item !== null">
                 <div class="item-value">{{ item.value }}</div>
-                <div class="item-producer">生产者: {{ item.producerId }}</div>
-                <div v-if="item.isConsumed" class="item-consumer">消费者: {{ item.consumerId }}</div>
-                <div v-if="item.isConsumed" class="item-wait-time">等待时间: {{ item.waitTime }}ms</div>
+                <div class="item-producer">{{ item.producerId }}</div>
+                <div v-if="item.isConsumed" class="item-consumer">{{ item.consumerId }}</div>
+                <div v-if="item.isConsumed" class="item-wait-time">{{ item.waitTime }}ms</div>
               </span>
               <span v-else>空</span>
               <div v-if="index === headPointer" class="pointer-marker head-marker">H</div>
@@ -1230,7 +1230,7 @@ input:focus {
   transition: all 0.3s;
   padding: 6px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  font-size: 12px;
+  font-size: 16px;
 }
 
 .consumed-item-filled {
@@ -1252,14 +1252,14 @@ input:focus {
 
 /* 已消费物品内容样式调整 */
 .consumed-item .item-value {
-  font-size: 18px;
+  font-size: 20px;
   margin-bottom: 4px;
   font-weight: bold;
 }
 
 .consumed-item .item-producer,
 .consumed-item .item-consumer {
-  font-size: 9px;
+  font-size: 12px;
   opacity: 0.9;
   text-align: center;
   line-height: 1.2;
