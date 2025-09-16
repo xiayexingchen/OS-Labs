@@ -1,212 +1,158 @@
 <template>
-    <h1>生产者-消费者问题演示</h1>
-
   <div class="producer-consumer-container">
+    <h1>生产者-消费者问题演示</h1>
     
     <!-- 参数设置区域 -->
     <div class="settings-section">
-      <!-- 第一行：基础设置 -->
-      <div class="settings-grid">
-        <div class="setting-item">
-          <label for="buffer-size">缓冲区大小:</label>
-          <input type="number" id="buffer-size" v-model.number="bufferSize" min="1" max="20">
-        </div>
-        <div class="setting-item">
-          <label for="producer-count">生产者数量:</label>
-          <input type="number" id="producer-count" v-model.number="producerCount" min="1" max="10">
-        </div>
-        <div class="setting-item">
-          <label for="consumer-count">消费者数量:</label>
-          <input type="number" id="consumer-count" v-model.number="consumerCount" min="1" max="10">
-        </div>
+      <div class="setting-item">
+        <label for="buffer-size">缓冲区大小:</label>
+        <input type="number" id="buffer-size" v-model.number="bufferSize" min="1" max="20">
       </div>
-      
-      <!-- 第二行：速度设置 -->
-      <div class="speed-settings-grid" style="display: flex; gap: 20px; justify-content: center; margin-top: 15px;">
-        <div class="setting-item">
-          <label for="production-speed">生产时间:</label>
-          <input type="range" id="production-speed" v-model.number="productionSpeed" min="1000" max="5000" step="100">
-          <span>{{ productionSpeed / 1000 }}秒</span>
-        </div>
-        <div class="setting-item">
-          <label for="consumption-speed">消费时间:</label>
-          <input type="range" id="consumption-speed" v-model.number="consumptionSpeed" min="1000" max="5000" step="100">
-          <span>{{ consumptionSpeed / 1000 }}秒</span>
-        </div>
+      <div class="setting-item">
+        <label for="producer-count">生产者数量:</label>
+        <input type="number" id="producer-count" v-model.number="producerCount" min="1" max="10">
       </div>
-      
-      <!-- 控制按钮 - 另起一行 -->
-      <div class="control-buttons-row" style="width:100%; display:flex; justify-content:center; gap:20px; margin-top:15px;">
-        <button @click="startSimulation" :disabled="isRunning" class="btn btn-start">
-          <i class="icon">▶</i> 开始模拟
-        </button>
-        <button @click="stopSimulation" :disabled="!isRunning" class="btn btn-stop">
-          <i class="icon">⏸</i> 停止模拟
-        </button>
-        <button @click="resetSimulation" class="btn btn-reset">
-          <i class="icon">🔄</i> 重置
-        </button>
+      <div class="setting-item">
+        <label for="consumer-count">消费者数量:</label>
+        <input type="number" id="consumer-count" v-model.number="consumerCount" min="1" max="10">
       </div>
+      <div class="setting-item">
+        <label for="production-speed">生产速度:</label>
+        <input type="range" id="production-speed" v-model.number="productionSpeed" min="1000" max="5000" step="500">
+        <span>{{ productionSpeed / 1000 }}秒</span>
+      </div>
+      <div class="setting-item">
+        <label for="consumption-speed">消费速度:</label>
+        <input type="range" id="consumption-speed" v-model.number="consumptionSpeed" min="1000" max="5000" step="500">
+        <span>{{ consumptionSpeed / 1000 }}秒</span>
+      </div>
+      <button @click="startSimulation" :disabled="isRunning" class="btn btn-start">
+        <i class="icon">▶</i> 开始模拟
+      </button>
+      <button @click="stopSimulation" :disabled="!isRunning" class="btn btn-stop">
+        <i class="icon">⏸</i> 停止模拟
+      </button>
+      <button @click="resetSimulation" class="btn btn-reset">
+        <i class="icon">🔄</i> 重置
+      </button>
     </div>
     
-    <!-- 缓冲区状态区域 -->
-    <div class="buffer-display">
-      <h2>缓冲区状态</h2>
+    <!-- 主内容区域 -->
+    <div class="main-content">
+      <!-- 缓冲区显示区域 -->
+      <div class="buffer-display">
+        <h2>缓冲区状态</h2>
+        <div class="buffer-container">
+          <div 
+            v-for="(item, index) in buffer" 
+            :key="index" 
+            class="buffer-item"
+            :class="{
+              'buffer-item-filled': item !== null,
+              'buffer-item-head': index === headPointer,
+              'buffer-item-tail': index === tailPointer,
+              'buffer-item-consumed': item !== null && item.isConsumed
+            }"
+          >
+            <span v-if="item !== null">
+              <div class="item-value">{{ item.value }}</div>
+              <div class="item-producer">生产者: {{ item.producerId }}</div>
+              <div v-if="item.isConsumed" class="item-consumer">消费者: {{ item.consumerId }}</div>
+              <div v-if="item.isConsumed" class="item-wait-time">等待时间: {{ item.waitTime }}ms</div>
+            </span>
+            <span v-else>空</span>
+            <div v-if="index === headPointer" class="pointer-marker head-marker">H</div>
+            <div v-if="index === tailPointer" class="pointer-marker tail-marker">T</div>
+          </div>
+        </div>
+        <div class="pointer-info">
+          <p>队头指针(H): {{ headPointer }} | 队尾指针(T): {{ tailPointer }} | 元素数量: {{ itemCount }}/{{ bufferSize }}</p>
+        </div>
+        
+        <!-- 缓冲区使用百分比进度条 -->
+        <div class="buffer-progress-container">
+          <div class="buffer-progress-bar">
+            <div class="buffer-progress-fill" :style="{ width: bufferUsage + '%' }"></div>
+          </div>
+          <span class="buffer-usage-text">{{ bufferUsage }}% 使用率</span>
+        </div>
+      </div>
       
-      <div class="buffer-content-layout">
-        <!-- 左边：缓冲区显示 -->
-        <div class="buffer-left-section">
-          <div class="buffer-container">
+      <!-- 生产者和消费者状态区域 -->
+      <div class="entities-status">
+        <!-- 生产者状态 -->
+        <div class="entity-group">
+          <h3>生产者状态</h3>
+          <div class="entity-container">
             <div 
-              v-for="(item, index) in buffer" 
-              :key="index" 
-              class="buffer-item"
+              v-for="producer in producers" 
+              :key="producer.id"
+              class="entity-item"
               :class="{
-                'buffer-item-filled': item !== null,
-                'buffer-item-head': index === headPointer,
-                'buffer-item-tail': index === tailPointer,
-                'buffer-item-consumed': item !== null && item.isConsumed
+                'entity-active': !producer.waiting,
+                'entity-waiting': producer.waiting,
+                'producer': true
               }"
             >
-              <span v-if="item !== null">
-                <div class="item-value">{{ item.value }}</div>
-                <div class="item-producer">生产者: {{ item.producerId }}</div>
-                <div v-if="item.isConsumed" class="item-consumer">消费者: {{ item.consumerId }}</div>
-                <div v-if="item.isConsumed" class="item-wait-time">等待时间: {{ item.waitTime }}ms</div>
+              <span class="entity-id">{{ producer.id }}</span>
+              <span class="entity-status">
+                {{ producer.waiting ? '等待中' : '活跃' }}
               </span>
-              <span v-else>空</span>
-              <div v-if="index === headPointer" class="pointer-marker head-marker">H</div>
-              <div v-if="index === tailPointer" class="pointer-marker tail-marker">T</div>
             </div>
-          </div>
-          <div class="pointer-info">
-            <p>队头指针(H): {{ headPointer }} | 队尾指针(T): {{ tailPointer }} | 元素数量: {{ itemCount }}/{{ bufferSize }}</p>
-          </div>
-          
-          <!-- 缓冲区使用百分比进度条 -->
-          <div class="buffer-progress-container">
-            <div class="buffer-progress-bar">
-              <div class="buffer-progress-fill" :style="{ width: bufferUsage + '%' }"></div>
-            </div>
-            <span class="buffer-usage-text">{{ bufferUsage }}% 使用率</span>
           </div>
         </div>
-
-        <!-- 右边：统计信息和状态 -->
-        <div class="buffer-right-section">
-          <!-- 右边上部：统计信息 -->
-          <div class="stats-in-buffer">
-            <h3>统计信息</h3>
-            <div class="buffer-stats-grid">
-              <div class="buffer-stat-card">
-                <div class="stat-icon">📦</div>
-                <div class="stat-content">
-                  <span class="stat-label">已生产物品</span>
-                  <span class="stat-value">{{ stats.totalProduced }}</span>
-                </div>
-              </div>
-              <div class="buffer-stat-card">
-                <div class="stat-icon">🍽️</div>
-                <div class="stat-content">
-                  <span class="stat-label">已消费物品</span>
-                  <span class="stat-value">{{ stats.totalConsumed }}</span>
-                </div>
-              </div>
-              <div class="buffer-stat-card">
-                <div class="stat-icon">⚠️</div>
-                <div class="stat-content">
-                  <span class="stat-label">缓冲区已满</span>
-                  <span class="stat-value">{{ stats.bufferFullCount }}</span>
-                </div>
-              </div>
-              <div class="buffer-stat-card">
-                <div class="stat-icon">📭</div>
-                <div class="stat-content">
-                  <span class="stat-label">缓冲区为空</span>
-                  <span class="stat-value">{{ stats.bufferEmptyCount }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 右边下部：生产者和消费者状态 -->
-          <div class="entities-status-in-buffer">
-            <!-- 生产者状态 -->
-            <div class="entity-group">
-              <h3>生产者状态</h3>
-              <div class="entity-container">
-                <div 
-                  v-for="producer in producers" 
-                  :key="producer.id"
-                  class="entity-item"
-                  :class="{
-                    'entity-active': !producer.waiting,
-                    'entity-waiting': producer.waiting,
-                    'producer': true
-                  }"
-                >
-                  <span class="entity-id">{{ producer.id }}</span>
-                  <span class="entity-status">
-                    {{ producer.waiting ? '等待中' : '活跃' }}
-                  </span>
-                </div>
-              </div>
-            </div>
-            
-            <!-- 消费者状态 -->
-            <div class="entity-group">
-              <h3>消费者状态</h3>
-              <div class="entity-container">
-                <div 
-                  v-for="consumer in consumers" 
-                  :key="consumer.id"
-                  class="entity-item"
-                  :class="{
-                    'entity-active': !consumer.waiting,
-                    'entity-waiting': consumer.waiting,
-                    'consumer': true
-                  }"
-                >
-                  <span class="entity-id">{{ consumer.id }}</span>
-                  <span class="entity-status">
-                    {{ consumer.waiting ? '等待中' : '活跃' }}
-                  </span>
-                </div>
-              </div>
+        
+        <!-- 消费者状态 -->
+        <div class="entity-group">
+          <h3>消费者状态</h3>
+          <div class="entity-container">
+            <div 
+              v-for="consumer in consumers" 
+              :key="consumer.id"
+              class="entity-item"
+              :class="{
+                'entity-active': !consumer.waiting,
+                'entity-waiting': consumer.waiting,
+                'consumer': true
+              }"
+            >
+              <span class="entity-id">{{ consumer.id }}</span>
+              <span class="entity-status">
+                {{ consumer.waiting ? '等待中' : '活跃' }}
+              </span>
             </div>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- 移除原来的主内容区域 -->
-        <!-- 已消费物品历史记录 -->
-    <div class="consumed-history">
-      <h2>已消费物品历史记录</h2>
-      <div class="consumed-items-grid">
-        <div 
-          v-for="(item, index) in formattedConsumedItems" 
-          :key="index"
-          class="consumed-item"
-          :class="{
-            'consumed-item-filled': item !== null,
-            'consumed-item-recent': index === 0 && item !== null
-          }"
-        >
-          <span v-if="item !== null">
-            <div class="item-value">{{ item.value }}</div>
-            <div class="item-producer">{{ item.producerId }}</div>
-            <div class="item-consumer">{{ item.consumerId }}</div>
-          </span>
-          <span v-else>空</span>
-          <div v-if="index === 0" class="pointer-marker recent-marker">R</div>
-        </div>
-      </div>
-    </div>
-
-
     
-
+    <!-- 统计信息区域 -->
+    <div class="stats-section">
+      <h2>统计信息</h2>
+      <div class="stats-container">
+        <div class="stat-item">
+          <span class="stat-icon">📦</span>
+          <span class="stat-label">已生产物品</span>
+          <span class="stat-value">{{ stats.totalProduced }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-icon">🍽️</span>
+          <span class="stat-label">已消费物品</span>
+          <span class="stat-value">{{ stats.totalConsumed }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-icon">⚠️</span>
+          <span class="stat-label">缓冲区已满次数</span>
+          <span class="stat-value">{{ stats.bufferFullCount }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-icon">📭</span>
+          <span class="stat-label">缓冲区为空次数</span>
+          <span class="stat-value">{{ stats.bufferEmptyCount }}</span>
+        </div>
+      </div>
+    </div>
+    
     <!-- 操作日志区域 -->
     <div class="operation-log">
       <h2>操作日志</h2>
@@ -248,9 +194,7 @@ export default {
         bufferEmptyCount: 0
       },
       statusPollingInterval: null,
-      pollingInterval: 1000, // 每1000ms获取一次状态，与后端模拟速度相匹配
-      consumedItemsHistory: [], // 存储已消费物品的历史记录
-      historyFetchCounter: 0 // 用于控制历史记录获取频率的计数器
+      pollingInterval: 1000 // 每1000ms获取一次状态，与后端模拟速度相匹配
     }
   },
   created() {
@@ -263,35 +207,9 @@ export default {
     // 计算缓冲区使用率百分比
     bufferUsage() {
       return Math.round((this.itemCount / this.bufferSize) * 100);
-    },
-    
-    // 格式化已消费物品列表，固定显示20个方格
-    formattedConsumedItems() {
-      // 创建一个长度为20的新数组，初始值为null
-      const formatted = new Array(20).fill(null);
-      
-      // 将已消费物品填充到新数组中，第一个位置是最近消费的
-      // 从历史列表的后面获取数据，确保最新消费的物品显示在第一个位置
-      const itemsToDisplay = this.consumedItemsHistory.slice(-20).reverse();
-      itemsToDisplay.forEach((item, index) => {
-        formatted[index] = item;
-      });
-      
-      return formatted;
     }
   },
   methods: {
-    // 获取已消费物品历史记录
-    async fetchConsumedHistory() {
-      try {
-        const response = await this.$axios.get('/api/producer-consumer/consumed-history');
-        this.consumedItemsHistory = response.data;
-      } catch (error) {
-        console.error('获取已消费物品历史记录失败:', error);
-        // 本地模拟模式下，不做处理
-      }
-    },
-    
     async initializeSimulation() {
       try {
         const response = await this.$axios.post('/api/producer-consumer/init', {
@@ -303,7 +221,6 @@ export default {
           consumptionSpeed: this.consumptionSpeed
         });
         this.updateFromStatus(response.data);
-        this.fetchConsumedHistory(); // 获取初始历史记录
       } catch (error) {
         console.error('初始化失败:', error);
         alert('后端服务未启动或连接失败，请确保Spring Boot应用正在运行');
@@ -487,7 +404,6 @@ export default {
         this.isRunning = true;
         this.updateFromStatus(response.data);
         this.startStatusPolling();
-        this.fetchConsumedHistory(); // 获取初始历史记录
         this.addLog(`模拟开始，速度: ${this.simulationSpeed}ms`);
       } catch (error) {
         console.error('开始模拟失败:', error);
@@ -549,31 +465,20 @@ export default {
       this.itemCount = status.itemCount || 0;
       this.bufferSize = status.bufferSize || this.bufferSize;
       
-      // 获取后端返回的buffer数据
-      const backendBuffer = status.buffer || [];
-      
-      // 创建一个长度等于bufferSize的新数组，初始值为null
-      this.buffer = new Array(this.bufferSize).fill(null);
-      
-      // 将后端返回的数据填充到新数组中
-      backendBuffer.forEach((item, index) => {
-        if (index < this.bufferSize) {
-          if (!item) {
-            this.buffer[index] = null;
-          } else {
-            // 确保每个buffer项都有完整的属性
-            this.buffer[index] = {
-              ...item,
-              // 使用后端返回的'consumed'字段，并设置'isConsumed'属性
-              isConsumed: item.consumed !== undefined ? item.consumed : false,
-              consumed: item.consumed !== undefined ? item.consumed : false,
-              // 确保consumerId属性存在，未消费时为null
-              consumerId: item.consumerId || null,
-              // 确保waitTime属性存在
-              waitTime: item.waitTime || 0
-            };
-          }
-        }
+      // 确保每个buffer项都有完整的属性，特别是消费状态和消费者ID
+      // 注意：后端返回的是'consumed'字段，而不是'isConsumed'
+      this.buffer = (status.buffer || []).map(item => {
+        if (!item) return null;
+        return {
+          ...item,
+          // 使用后端返回的'consumed'字段，并设置'isConsumed'属性以保持前端一致性
+          isConsumed: item.consumed !== undefined ? item.consumed : false,
+          consumed: item.consumed !== undefined ? item.consumed : false,
+          // 确保consumerId属性存在，未消费时为null
+          consumerId: item.consumerId || null,
+          // 确保waitTime属性存在
+          waitTime: item.waitTime || 0
+        };
       });
       
       // 更新生产者和消费者信息，完全使用后端返回的真实状态数据
@@ -608,16 +513,6 @@ export default {
       if (status.logs && status.logs.length > 0) {
         this.operationLogs = status.logs;
       }
-      
-      // 每3次状态轮询获取一次历史记录，减少API调用频率
-      if (!this.historyFetchCounter) {
-        this.historyFetchCounter = 0;
-      }
-      this.historyFetchCounter++;
-      if (this.historyFetchCounter >= 2) {
-        this.historyFetchCounter = 0;
-        this.fetchConsumedHistory();
-      }
     },
     
     addLog(message) {
@@ -640,7 +535,7 @@ export default {
   max-width: 95%;
   margin: 0 auto;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: 100vh;
   color: #333;
 }
@@ -674,38 +569,13 @@ export default {
 
 /* 设置区域样式 */
 .settings-section {
-  margin-bottom: 2em;
-  padding: 1.5em;
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  animation: fadeIn 0.3s ease-out;
-}
-
-.settings-section h2 {
-  color: #2c3e50;
-  margin-top: 0;
-  margin-bottom: 1.5em;
-  font-size: 1.5rem;
   display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.settings-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
-  margin-bottom: 15px;
-}
-
-/* 速度设置行样式 */
-.speed-settings-grid {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin: 15px 0;
   flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+  align-items: center;
+  padding: 25px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 }
 
 .setting-item {
@@ -715,7 +585,7 @@ export default {
   background: white;
   padding: 12px 16px;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
@@ -800,125 +670,26 @@ input:focus {
   box-shadow: none;
 }
 
-/* 控制按钮行样式 */
-.control-buttons-row {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-top: 15px;
-  flex-wrap: wrap;
+/* 主内容区域布局 */
+.main-content {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 24px;
 }
 
-
-
-/* 缓冲区显示样式 - 白色背景 */
-    .buffer-display {
-      background: white;
-      border-radius: 15px;
-      padding: 30px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-      margin-bottom: 30px;
-      border: 1px solid #e2e8f0;
-    }
-
-    .buffer-display h2 {
-      color: #2c3e50;
-      text-align: center;
-      margin-bottom: 25px;
-      font-size: 28px;
-      font-weight: 700;
-    }
-
-/* 新布局容器 - 7:3比例 */
-    .buffer-content-layout {
-      display: grid;
-      grid-template-columns: 7fr 3fr;
-      gap: 30px;
-      align-items: start;
-    }
-
-.buffer-left-section {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
+/* 缓冲区显示样式 */
+.buffer-display {
+  background: white;
 }
 
-.buffer-right-section {
+.buffer-display h2 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
   display: flex;
-  flex-direction: column;
-  gap: 20px;
+  align-items: center;
+  gap: 10px;
 }
-
-/* 右边上部：统计信息 - 白色背景适配 */
-    .stats-in-buffer {
-      background: #f8fafc;
-      border-radius: 12px;
-      padding: 20px;
-      border: 1px solid #e2e8f0;
-    }
-
-    .stats-in-buffer h3 {
-      color: #2c3e50;
-      margin-bottom: 15px;
-      font-size: 20px;
-      font-weight: 600;
-    }
-
-/* 右边下部：生产者和消费者状态 - 白色背景适配 */
-    .entities-status-in-buffer {
-      background: #f8fafc;
-      border-radius: 12px;
-      padding: 20px;
-      border: 1px solid #e2e8f0;
-    }
-
-/* 缓冲区统计信息网格 - 白色背景适配 */
-    .buffer-stats-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    .buffer-stat-card {
-      background: linear-gradient(135deg, #ffffff, #f8fafc);
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      padding: 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.3s ease;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    }
-
-    .buffer-stat-card:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-      border-color: #cbd5e0;
-    }
-
-    .stat-icon {
-      font-size: 20px;
-      flex-shrink: 0;
-    }
-
-    .stat-content {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .stat-label {
-      color: #64748b;
-      font-size: 11px;
-      font-weight: 500;
-    }
-
-    .stat-value {
-      color: #1e293b;
-      font-size: 16px;
-      font-weight: 700;
-    }
 
 .buffer-container {
   display: flex;
@@ -967,6 +738,7 @@ input:focus {
   background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
   border-color: #3b82f6;
 }
+
 .item-value {
   font-size: 24px;
   margin-bottom: 8px;
@@ -1055,79 +827,136 @@ input:focus {
   color: #4a5568;
 }
 
-/* 生产者和消费者状态区域样式 - 白色背景适配 */
-.entities-status-in-buffer {
+/* 生产者和消费者状态样式 */
+.entities-status {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 20px;
 }
 
-.entities-status-in-buffer .entity-group {
-  margin-bottom: 0;
+.entity-group {
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
 }
 
-.entities-status-in-buffer .entity-group h3 {
+.entity-group h3 {
   color: #2c3e50;
-  margin-bottom: 10px;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.entities-status-in-buffer .entity-container {
+  margin-bottom: 15px;
+  font-size: 1.3rem;
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
 }
 
-.entities-status-in-buffer .entity-item {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 6px 10px;
+.entity-container {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.3s ease;
-  font-size: 12px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
-.entities-status-in-buffer .entity-item.entity-active {
-  background: #f0fdf4;
-  border-color: #4caf50;
-  color: #166534;
-}
-
-.entities-status-in-buffer .entity-item.entity-waiting {
-  background: #fffbeb;
-  border-color: #ff9800;
-  color: #92400e;
-}
-
-.entities-status-in-buffer .entity-item.producer {
-  border-left: 2px solid #4caf50;
-}
-
-.entities-status-in-buffer .entity-item.consumer {
-  border-left: 2px solid #ff9800;
-}
-
-.entities-status-in-buffer .entity-id {
+.entity-item {
+  padding: 10px 16px;
+  border-radius: 8px;
   font-weight: 600;
-  color: #1e293b;
-  font-size: 13px;
-  font-family: 'Courier New', monospace;
-  min-width: 25px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 70px;
+  transition: all 0.3s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.entity-id {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.entity-status {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.entity-active.producer {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+}
+
+.entity-waiting.producer {
+  background: #ccc;
+  color: #666;
+  opacity: 0.7;
+}
+
+.entity-active.consumer {
+  background: linear-gradient(135deg, #2196F3, #0b7dda);
+  color: white;
+}
+
+.entity-waiting.consumer {
+  background: #ccc;
+  color: #666;
+  opacity: 0.7;
+}
+
+.entity-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* 统计信息样式 */
+.stats-section h2 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.stat-item {
   text-align: center;
-  display: inline-block;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-.entities-status-in-buffer .entity-status {
-  color: #475569;
-  font-size: 11px;
+.stat-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
 }
 
+.stat-icon {
+  font-size: 32px;
+  margin-bottom: 10px;
+  display: block;
+}
 
+.stat-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #4a5568;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 2.5em;
+  color: #667eea;
+  font-weight: bold;
+  line-height: 1;
+}
 
 /* 操作日志样式 */
 .operation-log h2 {
@@ -1187,109 +1016,6 @@ input:focus {
   font-style: italic;
 }
 
-/* 已消费物品历史记录样式 */
-.consumed-history {
-  /* background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); */
-  border-radius: 14px;
-  padding: 24px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-}
-
-.consumed-history h2 {
-  margin-bottom: 18px;
-  font-size: 1.5rem;
-  color: #1e293b;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* 已消费物品网格布局 - 固定20个方格，分为两排 */
-.consumed-items-grid {
-  display: grid;
-  grid-template-columns: repeat(10, 1fr);
-  grid-template-rows: repeat(2, 1fr);
-  gap: 8px;
-  margin: 20px 0;
-  justify-content: center;
-}
-
-/* 已消费物品方格样式 - 调整大小 */
-.consumed-item {
-  width: 90px;
-  height: 90px;
-  border: 3px solid #e2e8f0;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  background-color: #f9f9f9;
-  position: relative;
-  transition: all 0.3s;
-  padding: 6px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  font-size: 12px;
-}
-
-.consumed-item-filled {
-  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
-  color: white;
-  border-color: #3b82f6;
-}
-
-.consumed-item-recent {
-  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
-  border-color: #e11d48;
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.8; }
-}
-
-/* 已消费物品内容样式调整 */
-.consumed-item .item-value {
-  font-size: 18px;
-  margin-bottom: 4px;
-  font-weight: bold;
-}
-
-.consumed-item .item-producer,
-.consumed-item .item-consumer {
-  font-size: 9px;
-  opacity: 0.9;
-  text-align: center;
-  line-height: 1.2;
-  margin: 1px 0;
-}
-
-/* 最近消费标记样式 */
-.recent-marker {
-  background: linear-gradient(135deg, #f43f5e, #e11d48);
-  left: 50%;
-  transform: translateX(-50%);
-  top: -22px;
-}
-
-.consumed-history .pointer-info {
-  margin-top: 30px;
-  text-align: center;
-  font-size: 0.9rem;
-  color: #64748b;
-  font-weight: bold;
-  padding: 8px;
-  background: #f8fafc;
-  border-radius: 8px;
-  border-left: 4px solid #667eea;
-}
-
-h3 {
-  margin-top: 0;
-}
-
 /* 响应式设计 */
 @media (max-width: 768px) {
   .producer-consumer-container {
@@ -1317,10 +1043,6 @@ h3 {
   }
   
   .stats-container {
-    grid-template-columns: 1fr;
-  }
-  
-  .consumed-items-container {
     grid-template-columns: 1fr;
   }
   
