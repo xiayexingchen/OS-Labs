@@ -8,8 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
-
-
 import java.util.List;
 
 @RestController
@@ -43,6 +41,16 @@ public class ProducerConsumerController {
     @PostMapping("/start")
     public ProducerConsumerStatusDTO start() {
         producerConsumerService.startSimulation();
+        return producerConsumerService.getStatus();
+    }
+    
+    /**
+     * 继续模拟（恢复停止时的状态）
+     * POST /api/producer-consumer/continue
+     */
+    @PostMapping("/continue")
+    public ProducerConsumerStatusDTO continueSimulation() {
+        producerConsumerService.continueSimulation();
         return producerConsumerService.getStatus();
     }
 

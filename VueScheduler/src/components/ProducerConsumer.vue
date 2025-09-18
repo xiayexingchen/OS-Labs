@@ -43,6 +43,9 @@
         <button @click="stopSimulation" :disabled="!isRunning" class="btn btn-stop">
           <i class="icon">⏸</i> 停止模拟
         </button>
+        <button @click="continueSimulation" :disabled="isRunning" class="btn btn-continue">
+          <i class="icon">▶▶</i> 继续模拟
+        </button>
         <button @click="resetSimulation" class="btn btn-reset">
           <i class="icon">🔄</i> 重置
         </button>
@@ -62,17 +65,20 @@
               :key="index" 
               class="buffer-item"
               :class="{
-                'buffer-item-filled': item !== null,
-                'buffer-item-head': index === headPointer,
-                'buffer-item-tail': index === tailPointer,
-                'buffer-item-consumed': item !== null && item.isConsumed
+                'buffer-item-filled': item !== null && item.state !== '空',
+                'buffer-item-empty': item !== null && item.state === '空',
+                'buffer-item-producing': item !== null && item.state === '生产中',
+                'buffer-item-completed': item !== null && item.state === '已完成',
+                'buffer-item-consuming': item !== null && item.state === '消费中',
+                'buffer-item-consumed': item !== null && item.state === '已消费'
               }"
             >
               <span v-if="item !== null">
-                <div class="item-value">{{ item.value }}</div>
-                <div class="item-producer">{{ item.producerId }}</div>
-                <div v-if="item.isConsumed" class="item-consumer">{{ item.consumerId }}</div>
-                <div v-if="item.isConsumed" class="item-wait-time">{{ item.waitTime }}ms</div>
+                <div class="item-state">{{ item.state }}</div>
+                <div v-if="item.state !== '空'" class="item-value">{{ item.value }}</div>
+                <div v-if="item.state !== '空'" class="item-producer">{{ item.producerId }}</div>
+                <div v-if="item.state === '消费中' || item.state === '已消费'" class="item-consumer">{{ item.consumerId }}</div>
+                <div v-if="item.state === '已消费'" class="item-wait-time">{{ item.waitTime }}ms</div>
               </span>
               <span v-else>空</span>
               <div v-if="index === headPointer" class="pointer-marker head-marker">H</div>
@@ -514,6 +520,22 @@ export default {
         this.stopLocalSimulation();
       }
     },
+    
+    async continueSimulation() {
+      if (this.isRunning) return;
+      
+      try {
+        const response = await this.$axios.post('/api/producer-consumer/continue');
+        this.isRunning = true;
+        this.updateFromStatus(response.data);
+        this.startStatusPolling();
+        this.addLog('模拟继续');
+      } catch (error) {
+        console.error('继续模拟失败:', error);
+        // 使用本地模拟
+        this.startLocalSimulation();
+      }
+    },
 
     startStatusPolling() {
       this.stopStatusPolling(); // 确保之前的轮询已停止
@@ -570,7 +592,9 @@ export default {
               // 确保consumerId属性存在，未消费时为null
               consumerId: item.consumerId || null,
               // 确保waitTime属性存在
-              waitTime: item.waitTime || 0
+              waitTime: item.waitTime || 0,
+              // 确保state属性存在
+              state: item.state || '空'
             };
           }
         }
@@ -945,7 +969,21 @@ input:focus {
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.buffer-item-filled {
+.buffer-item-empty {
+  background-color: #f9f9f9;
+  color: #9ca3af;
+  border-color: #e2e8f0;
+}
+
+.buffer-item-producing {
+  background: linear-gradient(135deg, #fcd34d 0%, #fbbf24 100%);
+  color: white;
+  border-color: #fbbf24;
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(251, 191, 36, 0.2);
+}
+
+.buffer-item-completed {
   background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
   color: white;
   border-color: #4CAF50;
@@ -953,19 +991,27 @@ input:focus {
   box-shadow: 0 4px 8px rgba(76, 175, 80, 0.2);
 }
 
-.buffer-item-head {
+.buffer-item-consuming {
+  background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
+  color: white;
   border-color: #f97316;
-  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.3);
-}
-
-.buffer-item-tail {
-  border-color: #0ea5e9;
-  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(249, 115, 22, 0.2);
 }
 
 .buffer-item-consumed {
   background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  color: white;
   border-color: #3b82f6;
+  transform: scale(1.0);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.item-state {
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 4px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 .item-value {
   font-size: 24px;
