@@ -53,8 +53,18 @@
     </div>
     
     <!-- 缓冲区状态区域 -->
-    <div class="buffer-display">
-      <h2>缓冲区状态</h2>
+    <div class="buffer-display" :class="{ 'fullscreen-mode': isFullscreen }">
+      <div class="buffer-header">
+        <h2>缓冲区状态</h2>
+        <button 
+          class="fullscreen-toggle" 
+          @click="toggleFullscreen"
+          :title="isFullscreen ? '退出全屏' : '全屏显示'"
+        >
+          <i :class="isFullscreen ? 'icon-exit-fullscreen' : 'icon-enter-fullscreen'"></i>
+          {{ isFullscreen ? '退出全屏' : '全屏' }}
+        </button>
+      </div>
       
       <div class="buffer-content-layout">
         <!-- 左边：缓冲区显示 -->
@@ -187,7 +197,7 @@
 
     <!-- 移除原来的主内容区域 -->
         <!-- 已消费物品历史记录 -->
-    <div class="consumed-history">
+    <!-- <div class="consumed-history">
       <h2>已消费物品历史记录</h2>
       <div class="consumed-items-grid">
         <div 
@@ -208,7 +218,7 @@
           <div v-if="index === 0" class="pointer-marker recent-marker">R</div>
         </div>
       </div>
-    </div>
+    </div> -->
 
 
     
@@ -247,6 +257,7 @@ export default {
       consumptionSpeed: 3000, // 默认消费速度3秒
       producers: [],
       consumers: [],
+      isFullscreen: false, // 全屏状态
       stats: {
         totalProduced: 0,
         totalConsumed: 0,
@@ -287,6 +298,19 @@ export default {
     }
   },
   methods: {
+    // 全屏切换功能
+    toggleFullscreen() {
+      this.isFullscreen = !this.isFullscreen;
+      
+      if (this.isFullscreen) {
+        // 进入全屏模式
+        this.addLog('缓冲区显示已切换到全屏模式');
+      } else {
+        // 退出全屏模式
+        this.addLog('缓冲区显示已退出全屏模式');
+      }
+    },
+    
     // 获取已消费物品历史记录
     async fetchConsumedHistory() {
       try {
@@ -852,6 +876,132 @@ input:focus {
       margin-bottom: 25px;
       font-size: 28px;
       font-weight: 700;
+    }
+
+    /* 缓冲区头部 - 包含标题和全屏按钮 */
+    .buffer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+    }
+
+    .buffer-header h2 {
+      margin: 0;
+    }
+
+    /* 全屏切换按钮 */
+    .fullscreen-toggle {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    .fullscreen-toggle:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .fullscreen-toggle:active {
+      transform: translateY(0);
+    }
+
+    /* 全屏模式样式 */
+    .buffer-display.fullscreen-mode {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 9999;
+      margin: 0;
+      border-radius: 0;
+      padding: 40px;
+      overflow-y: auto;
+      background: white;
+    }
+
+    .buffer-display.fullscreen-mode .buffer-header {
+      margin-bottom: 40px;
+    }
+
+    .buffer-display.fullscreen-mode h2 {
+      font-size: 36px;
+    }
+
+    .buffer-display.fullscreen-mode .buffer-content-layout {
+      gap: 40px;
+    }
+
+    .buffer-display.fullscreen-mode .buffer-item {
+      width: 120px;
+      height: 120px;
+    }
+
+    .buffer-display.fullscreen-mode .buffer-item .item-state {
+      font-size: 16px;
+    }
+
+    .buffer-display.fullscreen-mode .buffer-item .item-value {
+      font-size: 28px;
+    }
+
+    .buffer-display.fullscreen-mode .buffer-item .item-producer,
+    .buffer-display.fullscreen-mode .buffer-item .item-consumer,
+    .buffer-display.fullscreen-mode .buffer-item .item-wait-time {
+      font-size: 12px;
+    }
+
+    .buffer-display.fullscreen-mode .stats-in-buffer,
+    .buffer-display.fullscreen-mode .entities-status-in-buffer {
+      padding: 30px;
+    }
+
+    .buffer-display.fullscreen-mode .stats-in-buffer h3,
+    .buffer-display.fullscreen-mode .entities-status-in-buffer h3 {
+      font-size: 24px;
+    }
+
+    .buffer-display.fullscreen-mode .buffer-stat-card {
+      padding: 16px;
+    }
+
+    .buffer-display.fullscreen-mode .stat-icon {
+      font-size: 24px;
+    }
+
+    .buffer-display.fullscreen-mode .stat-label {
+      font-size: 13px;
+    }
+
+    .buffer-display.fullscreen-mode .stat-value {
+      font-size: 20px;
+    }
+
+    .buffer-display.fullscreen-mode .entity-item {
+      padding: 12px 16px;
+      font-size: 16px;
+    }
+
+    /* 全屏按钮图标 */
+    .icon-enter-fullscreen::before {
+      content: "⛶";
+      font-size: 16px;
+    }
+
+    .icon-exit-fullscreen::before {
+      content: "⛷";
+      font-size: 16px;
     }
 
 /* 新布局容器 - 7:3比例 */
