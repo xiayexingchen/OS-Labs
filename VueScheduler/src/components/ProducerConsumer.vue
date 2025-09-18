@@ -86,17 +86,21 @@
               <span v-if="item !== null">
                 <div class="item-state">{{ item.state }}</div>
                 <div v-if="item.state !== '空'" class="item-value">{{ item.value }}</div>
-                <div v-if="item.state !== '空'" class="item-producer">{{ item.producerId }}</div>
-                <div v-if="item.state === '消费中' || item.state === '已消费'" class="item-consumer">{{ item.consumerId }}</div>
-                <div v-if="item.state === '已消费'" class="item-wait-time">{{ item.waitTime }}ms</div>
+                <!-- 同一行显示生产者、消费者和等待时间信息 -->
+                <div class="item-info-container">
+                  <div v-if="item.state !== '空'" class="item-producer">{{ item.producerId }}</div>
+                  <div v-if="item.state === '消费中' || item.state === '已消费'" class="item-consumer">{{ item.consumerId }}</div>
+                  <div v-if="item.state === '已消费'" class="item-wait-time">{{ item.waitTime }}ms</div>
+                </div>
               </span>
               <span v-else>空</span>
-              <div v-if="index === headPointer" class="pointer-marker head-marker">H</div>
-              <div v-if="index === tailPointer" class="pointer-marker tail-marker">T</div>
+              <!-- <div v-if="index === headPointer" class="pointer-marker head-marker">H</div> -->
+              <!-- <div v-if="index === tailPointer" class="pointer-marker tail-marker">T</div> -->
             </div>
           </div>
-          <div class="pointer-info">
-            <p>队头指针(H): {{ headPointer }} | 队尾指针(T): {{ tailPointer }} | 元素数量: {{ itemCount }}/{{ bufferSize }}</p>
+          <div class="pointer-info" style="margin: 10px;">
+            <!-- <p>队头指针(H): {{ headPointer }} | 队尾指针(T): {{ tailPointer }} | 元素数量: {{ itemCount }}/{{ bufferSize }}</p> -->
+          <p v-if="itemCount > 0" style="margin: 10px;">元素数量: {{ itemCount }}/{{ bufferSize }}</p>
           </div>
           
           <!-- 缓冲区使用百分比进度条 -->
@@ -110,6 +114,29 @@
 
         <!-- 右边：统计信息和状态 -->
         <div class="buffer-right-section">
+          <!-- 状态图例 -->
+          <div class="status-legend">
+            <h4>状态图例</h4>
+            <div class="legend-items">
+              <div class="legend-item">
+                <div class="legend-square buffer-item-producing-small"></div>
+                <span>生产中</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-square buffer-item-completed-small"></div>
+                <span>已完成</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-square buffer-item-consuming-small"></div>
+                <span>消费中</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-square buffer-item-consumed-small"></div>
+                <span>已消费</span>
+              </div>
+            </div>
+          </div>
+          
           <!-- 右边上部：统计信息 -->
           <div class="stats-in-buffer">
             <h3>统计信息</h3>
@@ -1053,7 +1080,7 @@ input:focus {
       grid-template-columns: 1fr 1fr;
       gap: 10px;
     }
-
+buffer-left-section
     .buffer-stat-card {
       background: linear-gradient(135deg, #ffffff, #f8fafc);
       border: 1px solid #e2e8f0;
@@ -1185,6 +1212,41 @@ input:focus {
   margin-top: 2px;
 }
 
+/* 同一行显示信息容器 - 全局样式 */
+.item-info-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  flex-wrap: nowrap;
+}
+
+/* 调整信息项样式以确保水平排列 */
+.item-info-container .item-producer,
+.item-info-container .item-consumer,
+.item-info-container .item-wait-time {
+  margin: 0;
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.05);
+  white-space: nowrap;
+}
+
+.item-info-container .item-producer {
+  color: #2563eb;
+}
+
+.item-info-container .item-consumer {
+  color: #047857;
+}
+
+.item-info-container .item-wait-time {
+  color: #92400e;
+  opacity: 1;
+}
+
 .pointer-marker {
   position: absolute;
   top: -25px;
@@ -1215,8 +1277,8 @@ input:focus {
   font-weight: bold;
   text-align: center;
   color: #4a5568;
-  font-size: 16px;
-  padding: 12px;
+  font-size: 22px;
+  /* padding: 12px; */
   background: #f8fafc;
   border-radius: 8px;
   border-left: 4px solid #667eea;
@@ -1451,6 +1513,7 @@ input:focus {
   font-size: 20px;
   margin-bottom: 4px;
   font-weight: bold;
+  text-align: center;
 }
 
 .consumed-item .item-producer,
@@ -1460,6 +1523,37 @@ input:focus {
   text-align: center;
   line-height: 1.2;
   margin: 1px 0;
+}
+
+/* 确保已消费项目内所有文本内容居中 */
+.consumed-item span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* 修复所有buffer-item状态的文本居中问题 */
+.buffer-item-consuming span,
+.buffer-item-producing span,
+.buffer-item-completed span,
+.buffer-item-consumed span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* 为所有buffer-item状态的item-value添加居中对齐 */
+.buffer-item-consuming .item-value,
+.buffer-item-producing .item-value,
+.buffer-item-completed .item-value,
+.buffer-item-consumed .item-value {
+  text-align: center;
 }
 
 /* 最近消费标记样式 */
@@ -1484,6 +1578,65 @@ input:focus {
 
 h3 {
   margin-top: 0;
+}
+
+/* 状态图例样式 */
+.status-legend {
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.status-legend h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #4a5568;
+  font-weight: 600;
+}
+
+.legend-items {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #4a5568;
+}
+
+.legend-square {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+/* 小尺寸状态方块样式 */
+.buffer-item-producing-small {
+  background: linear-gradient(135deg, #fcd34d 0%, #fbbf24 100%);
+  border-color: #fbbf24;
+}
+
+.buffer-item-completed-small {
+  background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+  border-color: #4CAF50;
+}
+
+.buffer-item-consuming-small {
+  background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
+  border-color: #f97316;
+}
+
+.buffer-item-consumed-small {
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  border-color: #3b82f6;
 }
 
 /* 响应式设计 */
@@ -1524,6 +1677,49 @@ h3 {
     width: 60px;
     height: 60px;
     font-size: 16px;
+  }
+  
+  /* 同一行显示信息容器 */
+  .item-info-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  
+  /* 各信息项样式 */
+  .item-producer, .item-consumer, .item-wait-time {
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.05);
+  }
+  
+  .item-producer {
+    color: #2563eb;
+  }
+  
+  .item-consumer {
+    color: #047857;
+  }
+  
+  .item-wait-time {
+    color: #92400e;
+  }
+  
+  /* 全屏模式下的样式 */
+  .buffer-display.fullscreen-mode .item-info-container {
+    gap: 12px;
+    margin-top: 8px;
+  }
+  
+  .buffer-display.fullscreen-mode .item-producer,
+  .buffer-display.fullscreen-mode .item-consumer,
+  .buffer-display.fullscreen-mode .item-wait-time {
+    font-size: 14px;
+    padding: 4px 10px;
   }
 }
 </style>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="800" viewBox="0 0 1000 800">
+  <!-- 背景和标题 -->
+  <rect x="0" y="0" width="1000" height="800" fill="#f9f9f9"/>
+  <text x="500" y="40" font-family="Arial" font-size="24" font-weight="bold" text-anchor="middle" fill="#333">生产者-消费者系统架构图</text>
+  
+  <!-- 前端部分 -->
+  <rect x="100" y="100" width="300" height="120" rx="10" ry="10" fill="#e6f3ff" stroke="#3399ff" stroke-width="2"/>
+  <text x="250" y="130" font-family="Arial" font-size="18" font-weight="bold" text-anchor="middle" fill="#333">前端 (Vue.js)</text>
+  <text x="250" y="160" font-family="Arial" font-size="14" text-anchor="middle" fill="#666">控制面板组件</text>
+  <text x="250" y="185" font-family="Arial" font-size="14" text-anchor="middle" fill="#666">实时状态显示组件</text>
+  <text x="250" y="210" font-family="Arial" font-size="14" text-anchor="middle" fill="#666">数据可视化组件</text>
+  
+  <!-- 后端部分 -->
+  <rect x="500" y="100" width="400" height="600" rx="10" ry="10" fill="#f0f7ff" stroke="#0066cc" stroke-width="2"/>
+  <text x="700" y="130" font-family="Arial" font-size="18" font-weight="bold" text-anchor="middle" fill="#333">后端 (Spring Boot)</text>
+  
+  <!-- 后端分层 - 控制器层 -->
+  <rect x="550" y="160" width="300" height="70" rx="5" ry="5" fill="#cce5ff" stroke="#0066cc" stroke-width="1"/>
+  <text x="700" y="190" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle" fill="#333">控制器层 (Controller)</text>
+  <text x="700" y="215" font-family="Arial" font-size="14" text-anchor="middle" fill="#666">ProducerController、ConsumerController</text>
+  
+  <!-- 后端分层 - 服务层 -->
+  <rect x="550" y="250" width="300" height="70" rx="5" ry="5" fill="#b3d9ff" stroke="#0066cc" stroke-width="1"/>
+  <text x="700" y="280" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle" fill="#333">服务层 (Service)</text>
+  <text x="700" y="305" font-family="Arial" font-size="14" text-anchor="middle" fill="#666">ProducerConsumerService</text>
+  
+  <!-- 共享缓冲区 - 中央位置 -->
+  <rect x="430" y="370" width="140" height="100" rx="10" ry="10" fill="#ffebcc" stroke="#ff9900" stroke-width="2" stroke-dasharray="5,3"/>
+  <text x="500" y="410" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle" fill="#cc6600">共享缓冲区</text>
+  <text x="500" y="435" font-family="Arial" font-size="14" text-anchor="middle" fill="#cc6600">BufferItem[]</text>
+  
+  <!-- 后端分层 - 核心组件层 -->
+  <rect x="550" y="370" width="300" height="100" rx="5" ry="5" fill="#99ccff" stroke="#0066cc" stroke-width="1"/>
+  <text x="700" y="400" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle" fill="#333">核心组件层</text>
+  <text x="700" y="425" font-family="Arial" font-size="14" text-anchor="middle" fill="#666">生产者线程池、消费者线程池</text>
+  <text x="700" y="450" font-family="Arial" font-size="14" text-anchor="middle" fill="#666">线程同步机制、状态管理</text>
+  
+  <!-- 后端分层 - 模型层 -->
+  <rect x="550" y="490" width="300" height="70" rx="5" ry="5" fill="#80bfff" stroke="#0066cc" stroke-width="1"/>
+  <text x="700" y="520" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle" fill="#333">模型层 (Model)</text>
+  <text x="700" y="545" font-family="Arial" font-size="14" text-anchor="middle" fill="#666">Producer、Consumer、BufferItem</text>
+  
+  <!-- DTO层 -->
+  <rect x="550" y="580" width="300" height="70" rx="5" ry="5" fill="#66b3ff" stroke="#0066cc" stroke-width="1"/>
+  <text x="700" y="610" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle" fill="#333">数据传输层 (DTO)</text>
+  <text x="700" y="635" font-family="Arial" font-size="14" text-anchor="middle" fill="#666">ProducerConsumerStatusDTO</text>
+  
+  <!-- 箭头连接 -->
+  <!-- 前端到后端控制器 -->
+  <path d="M350 160 L550 195" stroke="#333" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <!-- 控制器到服务层 -->
+  <path d="M700 230 L700 250" stroke="#333" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <!-- 服务层到核心组件层 -->
+  <path d="M700 320 L700 370" stroke="#333" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <!-- 核心组件层访问共享缓冲区 -->
+  <path d="M550 420 L430 420" stroke="#cc6600" stroke-width="2" fill="none" marker-end="url(#arrowhead)" stroke-dasharray="5,3"/>
+  <!-- 核心组件层到模型层 -->
+  <path d="M700 470 L700 490" stroke="#333" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <!-- 模型层到DTO层 -->
+  <path d="M700 560 L700 580" stroke="#333" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <!-- DTO返回前端 -->
+  <path d="M550 610 L250 300" stroke="#333" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- 箭头定义 -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#333"/>
+    </marker>
+  </defs>
+</svg>
